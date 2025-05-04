@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickCreditCheck | Instant Credit Report</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --error: #dc2626;
+      --success: #16a34a;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Header */
+    .header {
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    .logo i {
+      font-size: 1.5rem;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+    
+    .nav-links a {
+      color: #64748b;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+    
+    /* Main Container */
+    .main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem 1.5rem;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 28rem;
+      overflow: hidden;
+      display: none;
+      position: relative;
+    }
+    
+    .container.active {
+      display: block;
+    }
+    
+    .container-header {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      text-align: center;
+    }
+    
+    .container-header h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .container-header p {
+      opacity: 0.9;
+      font-size: 0.875rem;
+    }
+    
+    .container-body {
+      padding: 1.5rem;
+    }
+    
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      font-size: 0.875rem;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .select-wrapper {
+      position: relative;
+    }
+    
+    .select-wrapper::after {
+      content: "▼";
+      position: absolute;
+      top: 50%;
+      right: 1rem;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      color: #64748b;
+      pointer-events: none;
+    }
+    
+    select.form-control {
+      appearance: none;
+      padding-right: 2.5rem;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn:active {
+      transform: scale(0.98);
+    }
+    
+    .btn i {
+      margin-right: 0.5rem;
+    }
+    
+    /* Loading State */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+    }
+    
+    .loading-spinner {
+      width: 3rem;
+      height: 3rem;
+      border: 3px solid rgba(37, 99, 235, 0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      margin: 0 auto 1.5rem;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Error Message */
+    .alert {
+      padding: 0.875rem 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.875rem;
+      display: none;
+    }
+    
+    .alert-error {
+      background: #fee2e2;
+      color: var(--error);
+      border-left: 4px solid var(--error);
+    }
+    
+    /* Security Badges */
+    .security-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      background: #f1f5f9;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: #475569;
+    }
+    
+    .badge i {
+      color: var(--success);
+    }
+    
+    /* Features List */
+    .features {
+      margin: 1.5rem 0;
+    }
+    
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.875rem;
+    }
+    
+    .feature-icon {
+      color: var(--success);
+      font-size: 1.125rem;
+      margin-top: 0.125rem;
+    }
+    
+    /* Footer */
+    .footer {
+      background: white;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: #64748b;
+      border-top: 1px solid #f1f5f9;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .footer-links a {
+      color: #64748b;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+    
+    /* Chat Button */
+    .chat-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 3.5rem;
+      height: 3.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      z-index: 50;
+      transition: transform 0.2s, background 0.2s;
+    }
+    
+    .chat-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    /* Responsive */
+    @media (max-width: 640px) {
+      .header-container {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .nav-links {
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="#" class="logo" onclick="showPage('mainPage'); return false;">
+        <i class="fas fa-shield-alt"></i>
+        <span>QuickCreditCheck</span>
+      </a>
+      <div class="nav-links">
+        <a href="#" onclick="showPage('mainPage'); return false;">Home</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Main Page -->
+    <div class="container active" id="mainPage">
+      <div class="container-header">
+        <h2>Instant Credit Identity Check</h2>
+        <p>Secure and reliable credit reporting</p>
+      </div>
+      <div class="container-body">
+        <div class="features">
+          <div class="feature-item">
+            <i class="fas fa-check-circle feature-icon"></i>
+            <div>
+              <strong>Real-time credit monitoring</strong>
+              <p class="text-muted">Get alerts for critical changes to your credit profile</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-check-circle feature-icon"></i>
+            <div>
+              <strong>Identity theft protection</strong>
+              <p class="text-muted">24/7 monitoring for suspicious activity</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-check-circle feature-icon"></i>
+            <div>
+              <strong>Bank-grade security</strong>
+              <p class="text-muted">256-bit encryption protects your data</p>
+            </div>
+          </div>
+        </div>
+        
+        <button class="btn" onclick="showPage('step1')">
+          <i class="fas fa-lock"></i> Begin Secure Check
+        </button>
+        
+        <div class="security-badges">
+          <span class="badge">
+            <i class="fas fa-lock"></i> SSL Secure
+          </span>
+          <span class="badge">
+            <i class="fas fa-user-shield"></i> Privacy Protected
+          </span>
+          <span class="badge">
+            <i class="fas fa-check-circle"></i> PCI Compliant
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1: Personal Info -->
+    <div class="container" id="step1">
+      <div class="container-header">
+        <h2>Personal Information</h2>
+        <p>Step 1 of 3 - Secure identity verification</p>
+      </div>
+      <div class="container-body">
+        <form id="infoForm">
+          <div class="form-group">
+            <label for="fullname" class="form-label">Full Legal Name</label>
+            <input type="text" id="fullname" class="form-control" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="address" class="form-label">Current Address</label>
+            <input type="text" id="address" class="form-control" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="idtype" class="form-label">Government ID Type</label>
+            <div class="select-wrapper">
+              <select id="idtype" class="form-control" required>
+                <option value="">Select ID Type</option>
+                <option value="Driver License">Driver's License</option>
+                <option value="Passport">Passport</option>
+                <option value="State ID">State ID</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="idnumber" class="form-label">ID Number</label>
+            <input type="text" id="idnumber" class="form-control" required>
+          </div>
+          
+          <button type="submit" class="btn">
+            <i class="fas fa-arrow-right"></i> Continue Verification
+          </button>
+        </form>
+        
+        <div class="security-badges">
+          <span class="badge">
+            <i class="fas fa-lock"></i> Encrypted Submission
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="container" id="loading">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <h3>Verifying Your Identity</h3>
+        <p>This may take a few moments. Please don't close this window.</p>
+      </div>
+    </div>
+
+    <!-- Step 2: Verification Complete -->
+    <div class="container" id="step2">
+      <div class="container-header">
+        <h2>Verification Complete</h2>
+        <p>Your identity has been successfully verified</p>
+      </div>
+      <div class="container-body">
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle"></i> Your identity matches our secure records
+        </div>
+        
+        <p>To access your comprehensive credit report, a <strong>$1 authorization hold</strong> will be placed on your payment method. This is refundable within 24 hours.</p>
+        
+        <button class="btn" onclick="showPage('paymentPage')">
+          <i class="fas fa-credit-card"></i> Continue to Payment
+        </button>
+        
+        <div class="security-badges">
+          <span class="badge">
+            <i class="fas fa-shield-alt"></i> Verified Identity
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Payment -->
+    <div class="container" id="paymentPage">
+      <div class="container-header">
+        <h2>Secure Payment</h2>
+        <p>Final step to access your report</p>
+      </div>
+      <div class="container-body">
+        <div class="alert alert-error" id="errorMessage">
+          <i class="fas fa-exclamation-circle"></i> Card declined. Please try another payment method.
+        </div>
+        
+        <form id="paymentForm">
+          <div class="form-group">
+            <label for="cardnumber" class="form-label">Card Number</label>
+            <input type="text" id="cardnumber" class="form-control" placeholder="1234 5678 9012 3456" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="expiry" class="form-label">Expiration Date</label>
+            <input type="text" id="expiry" class="form-control" placeholder="MM/YY" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="cvv" class="form-label">Security Code (CVV)</label>
+            <input type="text" id="cvv" class="form-control" placeholder="123" required>
+          </div>
+          
+          <button type="submit" class="btn">
+            <i class="fas fa-lock"></i> Authorize $1 Payment
+          </button>
+        </form>
+        
+        <div class="security-badges">
+          <span class="badge">
+            <i class="fab fa-cc-visa"></i> Visa
+          </span>
+          <span class="badge">
+            <i class="fab fa-cc-mastercard"></i> Mastercard
+          </span>
+          <span class="badge">
+            <i class="fab fa-cc-amex"></i> American Express
+          </span>
+          <span class="badge">
+            <i class="fas fa-lock"></i> PCI DSS Compliant
+          </span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="#">Terms of Service</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Contact Us</a>
+    </div>
+    <p>© 2023 QuickCreditCheck. All rights reserved.</p>
+  </footer>
+
+  <!-- Chat Button -->
+  <button class="chat-btn">
+    <i class="fas fa-comment-dots"></i>
+  </button>
+
+  <script>
+    // Page navigation
+    function showPage(pageId) {
+      document.querySelectorAll('.container').forEach(container => {
+        container.classList.remove('active');
+      });
+      document.getElementById(pageId).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    // Form submissions
+    document.getElementById('infoForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      showPage('loading');
+      
+      // Simulate verification delay
+      setTimeout(() => {
+        showPage('step2');
+      }, 3000);
+    });
+
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('errorMessage').style.display = 'block';
+      
+      // Scroll to error message
+      document.getElementById('errorMessage').scrollIntoView({
+        behavior: 'smooth'
+      });
+    });
+
+    // Show main page by default
+    showPage('mainPage');
+  </script>
+</body>
+</html>
